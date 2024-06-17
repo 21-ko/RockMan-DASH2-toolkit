@@ -258,10 +258,12 @@ def main():
     pointer_diff = calculate_difference(pointers)
     
     # 문자 리스트 읽기
-    if not os.path.exists('Moji.tbl'):
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    moji_tbl_path = os.path.join(script_dir, 'Moji.tbl')
+    if not os.path.exists(moji_tbl_path):
         print("Character list file is missing")
         sys.exit(1)
-    moji_dict = load_moji_table('Moji.tbl')
+    moji_dict = load_moji_table(moji_tbl_path)
     
     # 디코딩 후 저장
     decoded_texts = decode_with_moji_and_controlcode(filename, offset, moji_dict, is_func, pointers, pointer_diff)

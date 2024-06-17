@@ -5,8 +5,8 @@ MegaMan Legends 2's Toolkit
 ## Program Description
 
 ### FontTool
-- Properly split a font (PIX) into two separate PIX files.
-- Combine the separated PIX files into a single font.
+- Properly split a font (PIX) into two separate TIM files.
+- Combine the separated TIM files into a single font.
 
 ### MELTTIMTool
 - Convert compressed TIM (MTIM) to PIX (decompression).

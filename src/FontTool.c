@@ -121,7 +121,7 @@ int main(int argc, char *argv[]) {
             return EXIT_FAILURE;
         }
 
-		bit_split(tp1, tp2, out, size1);
+        bit_split(tp1, tp2, out, size1);
 		
         char *extension = get_extension(argv[2]);
         char output_file1[256];

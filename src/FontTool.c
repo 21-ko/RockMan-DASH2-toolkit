@@ -169,6 +169,23 @@ void append_palette(const char* clt_file, const char* tim_file1, const char* tim
     free(buffer2);
 }
 
+uint32_t read_offset_value(const char *filename, size_t offset) {
+    FILE *file = fopen(filename, "rb");
+    if (!file) {
+        perror("File open error");
+        return 0;
+    }
+
+    fseek(file, offset, SEEK_SET);
+
+    uint32_t value;
+    fread(&value, sizeof(uint32_t), 1, file);
+
+    fclose(file);
+    
+    return value;
+}
+
 int main(int argc, char *argv[]) {
     if (argc < 3) {
         fprintf(stderr, "Usage: %s <combine|split> <input folder> [<input file 2> <output file>]\n", argv[0]);
@@ -183,8 +200,15 @@ int main(int argc, char *argv[]) {
             fprintf(stderr, "Usage for combine: %s combine <input file 1> <input file 2> <output file>\n", argv[0]);
             return EXIT_FAILURE;
         }
-        size1 = read_file(argv[2], 0x120, &tp1);
-        size2 = read_file(argv[3], 0x120, &tp2);
+		
+        uint32_t value1 = read_offset_value(argv[2], 0x08);
+        uint32_t value2 = read_offset_value(argv[3], 0x08);
+		
+        size_t read_size1 = value1 + 0x14;
+        size_t read_size2 = value2 + 0x14;
+		
+        size1 = read_file(argv[2], read_size1, &tp1);
+        size2 = read_file(argv[3], read_size2, &tp2);
 
         if (size1 != size2) {
             fprintf(stderr, "Error: Input files must be of the same size\n");

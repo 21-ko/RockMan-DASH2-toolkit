@@ -63,6 +63,7 @@ def control_code_legacy(f, control_code_full, a, b, c):
 
 # 제어 코드 매핑
 LEGACY_CODES = {
+    0xfb04: (1, 2, 0),
     0xfb05: (2, 1, 0),
     0xfb07: (2, 1, 0),
     0xfb08: (1, 2, 'wait'),

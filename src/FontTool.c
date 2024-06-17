@@ -70,6 +70,12 @@ void write_file(const char* filename, uint32_t* buffer, size_t size) {
     fclose(file);
 }
 
+char* get_extension(const char *filename) {
+    char *dot = strrchr(filename, '.');
+    if (!dot || dot == filename) return "";
+    return dot;
+}
+
 int main(int argc, char *argv[]) {
     if (argc < 3) {
         fprintf(stderr, "Usage: %s <combine|split> <input file 1> [<input file 2> <output file>]\n", argv[0]);
@@ -120,7 +126,7 @@ int main(int argc, char *argv[]) {
             perror("Memory allocation error");
             return EXIT_FAILURE;
         }
-
+		
         bit_split(tp1, tp2, out, size1);
 		
         char *extension = get_extension(argv[2]);

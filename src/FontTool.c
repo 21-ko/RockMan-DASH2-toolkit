@@ -121,9 +121,17 @@ int main(int argc, char *argv[]) {
             return EXIT_FAILURE;
         }
 
-        bit_split(tp1, tp2, out, size1);
-        write_file("FONT1.PIX", tp1, size1);
-        write_file("FONT2.PIX", tp2, size2);
+		bit_split(tp1, tp2, out, size1);
+		
+        char *extension = get_extension(argv[2]);
+        char output_file1[256];
+        char output_file2[256];
+		
+        snprintf(output_file1, sizeof(output_file1), "FONT1%s", extension);
+        snprintf(output_file2, sizeof(output_file2), "FONT2%s", extension);
+
+        write_file(output_file1, tp1, size1);
+        write_file(output_file2, tp2, size2);
 
         free(tp1);
         free(tp2);

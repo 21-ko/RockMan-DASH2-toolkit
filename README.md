@@ -1,5 +1,5 @@
 # RockMan-DASH2-toolkit
-Toolkit for Mega Man Legend 2
+Toolkit for MegaMan Legends 2
 
 
 ## Program Description

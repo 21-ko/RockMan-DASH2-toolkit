@@ -15,10 +15,7 @@ Toolkit for MegaMan Legends 2
 ### tim2bmp
 - Convert TIM to BMP.
 
-### bmp2tim
-- Convert BMP to TIM.
-
-> Note: The tim2bmp and bmp2tim tools were sourced from [this repository](https://github.com/ColdSauce/psxsdk). Please be aware that these tools are not covered by the stated license.
+> Note: tim2bmp is sourced from [this repository](https://github.com/ColdSauce/psxsdk). Please be aware that these tools are not covered by the stated license.
 
 \+ ------------------------------------
 

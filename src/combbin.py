@@ -5,7 +5,7 @@ combbin.py
 Description: Script to merge or split BIN archives.
 Author: happy_land
 Date: 24-06-16
-Last update: 24-09-14
+Last update: --
 
 Functionality:
 - Merge multiple BIN files into a single archive file.

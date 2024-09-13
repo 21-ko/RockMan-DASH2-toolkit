@@ -3,8 +3,9 @@
 msg2txt.py
 
 Description: Script to convert MSG to TXT.
-Date: 24-06-17
 Author: happy_land
+Date: 24-06-17
+Last update: 24-09-14
 """
 
 import os
@@ -12,7 +13,6 @@ import sys
 import struct
 from functools import partial
 
-# 바이트 타입
 def read_byte(f):
     return struct.unpack('B', f.read(1))[0]
 
@@ -22,10 +22,11 @@ def read_short(f):
 def read_long(f):
     return struct.unpack('>I', f.read(4))[0]
 
-TBC = '%H'  # 2바이트 기호
-FBC = '%I'  # 4바이트 기호
+# 포맷 코드
+TBC = '%H'  # 2바이트
+FBC = '%I'  # 4바이트
 
-# 제어 코드 함수
+# 제어 코드 0xfb06
 def get_pos(f, _):
     b2 = read_short(f)
     b3 = read_short(f)
@@ -33,35 +34,30 @@ def get_pos(f, _):
     b5 = read_byte(f)
     return f'pos({TBC}{b2},{TBC}{b3},{b4},{b5})'
 
+# 제어 코드 0xfb15
 def _1_52_(f, _):
     b2 = ord(f.read(1))
     codes = ','.join([f'{TBC}{read_short(f)}' for _ in range(5)])
     return f'_fb15({b2},{codes})'
 
+# 기본적인 제어 코드를 처리하는 함수
+# a는 데이터의 길이, b는 데이터 크기, c는 포맷 처리 여부
 def control_code_legacy(f, control_code_full, a, b, c):
     codes = ''
-    if a == 'len':
+    if a == 'len':  # 길이를 받아오는 게 아닌 파일에서 읽음
         length = read_byte(f)
         a = length
         codes = f'{length},'
 
     for _ in range(a):
-        if b == 1:
-            code = read_byte(f)
-        elif b == 2:
-            code = read_short(f)
-            code = f'{TBC}{code}'
-        elif b == 4:
-            code = read_long(f)
-            code = f'{FBC}{code}'
-        else:
-            raise ValueError(f'Invalid value for b: {b}')
+        code = read_byte(f) if b == 1 else (read_short(f) if b == 2 else read_long(f))
+        code = f'{TBC}{code}' if b == 2 else f'{FBC}{code}' if b == 4 else code
         codes += f'{code},'
-
+        
     result = f'({codes[:-1]})' if a else ''
     return f'_{control_code_full:02x}{result}' if c == 0 else f'{c}{result}'
 
-# 제어 코드 매핑
+# 제어 코드 목록
 LEGACY_CODES = {
     0xfb04: (1, 2, 0),
     0xfb05: (2, 1, 0),
@@ -129,7 +125,7 @@ CONTROL_CODE_LIST = {code: partial(control_code_legacy, a=a, b=b, c=c) for code,
 CONTROL_CODE_LIST[0xfb06] = get_pos
 CONTROL_CODE_LIST[0xfb15] = _1_52_
 
-# 문자 로드 함수
+# 문자 테이블을 로드하는 함수
 def load_moji_table(file_path):
     moji_dict = {}
     with open(file_path, 'r', encoding='utf-8') as file:
@@ -161,6 +157,7 @@ def decode_with_moji_and_controlcode(filename, offset, moji_dict, is_func, point
             f.seek(offset + pointers[i])
             text_parts = []
 
+            # 각 대사마다 func가 있는 경우
             if is_func == 1:
                 start_code = read_short(f)
                 text_parts.append(f'func({TBC}{start_code})')
@@ -171,12 +168,15 @@ def decode_with_moji_and_controlcode(filename, offset, moji_dict, is_func, point
                 byte = f.read(1)
                 byte_val = ord(byte)
 
+                # 일반 텍스트 처리
                 if 0x00 <= byte_val <= 0xE9:
                     text_parts.append(byte)
                     last_was_control_code = False
+                # 2바이트 문자라면 추가로 1바이트를 더 읽음
                 elif 0xF8 <= byte_val <= 0xFA:
                     text_parts.append(byte + f.read(1))
                     last_was_control_code = False
+                # 제어 코드 처리
                 elif byte_val in [0xFB, 0xFD]:
                     b1 = f.read(1)
                     control_code = (byte_val << 8) + ord(b1)
@@ -191,8 +191,10 @@ def decode_with_moji_and_controlcode(filename, offset, moji_dict, is_func, point
                     else:
                         text_parts.append(f'Unrecognized control code: 0x{control_code:04x}')
                     last_was_control_code = True
+                # 줄 바꿈 처리
                 elif byte_val == 0xFC:
                     text_parts.append('\tline' + NEW_LINE + TAB)
+                # 특수 문자 처리 (루비 등)
                 elif byte_val == 0xFE:
                     byte = f.read(1)
                     byte_val = ord(byte)
@@ -209,6 +211,7 @@ def decode_with_moji_and_controlcode(filename, offset, moji_dict, is_func, point
                     y = read_byte(f)
                     for _ in range(x):
                         rubi_char = f.read(1)
+                # 문장의 끝 처리
                 elif byte_val == 0xFF:
                     if text_parts and text_parts[-1] == (NEW_LINE + TAB):
                         text_parts.pop()
@@ -230,6 +233,7 @@ def write_to_file(file_name, texts):
     except FileNotFoundError:
         print(f"{file_name} not found.")
 
+# 명령줄 인자로 받은 오프셋 값을 해석하는 함수
 def parse_off_param(offset_param):
     if '+' in offset_param:
         return sum(int(value, 16) if '0x' in value else int(value) for value in offset_param.split('+'))
@@ -241,8 +245,7 @@ def main():
         sys.exit(1)
 
     filename, output_file, offset_param = sys.argv[1:4]
-    is_func = sys.argv[4] if len(sys.argv) > 4 else False
-    is_func = int(is_func)
+    is_func = int(sys.argv[4]) if len(sys.argv) > 4 else False
     if is_func < 0 or is_func >= 2:
         print("Invalid option")
         sys.exit(1)
@@ -252,12 +255,12 @@ def main():
     output_dir = os.path.dirname(output_file)
     if output_dir and not os.path.exists(output_dir):
         os.makedirs(output_dir)
-
-    # 포인터 계산
+        
+    # 포인터와 포인터 간의 차이를 계산하여 텍스트 구간 설정
     pointers = get_pointers(filename, offset)
     pointer_diff = calculate_difference(pointers)
     
-    # 문자 리스트 읽기
+    # 문자 테이블 파일 로드
     script_dir = os.path.dirname(os.path.abspath(__file__))
     moji_tbl_path = os.path.join(script_dir, 'Moji.tbl')
     if not os.path.exists(moji_tbl_path):
@@ -265,9 +268,10 @@ def main():
         sys.exit(1)
     moji_dict = load_moji_table(moji_tbl_path)
     
-    # 디코딩 후 저장
+    # 파일을 디코딩하여 텍스트 추출 및 출력 파일로 저장
     decoded_texts = decode_with_moji_and_controlcode(filename, offset, moji_dict, is_func, pointers, pointer_diff)
     write_to_file(output_file, decoded_texts)
 
 if __name__ == '__main__':
     main()
+    

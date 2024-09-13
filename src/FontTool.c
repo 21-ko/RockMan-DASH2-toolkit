@@ -6,9 +6,10 @@
  *  
  *  Author:  happy_land
  *  Date:  2024-06-18
+ *  Last update:  2024-09-14
  *  
  *******************************************************************************/
-
+ 
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -28,8 +29,9 @@ void bit_split(uint32_t* tp1, uint32_t* tp2, uint32_t* combined, size_t size) {
 }
 
 size_t read_file(const char* filename, size_t offset, uint32_t** buffer) {
-    FILE* file = fopen(filename, "rb");
-    if (!file) {
+    FILE* file = NULL;
+    errno_t err = fopen_s(&file, filename, "rb");
+    if (err != 0 || !file) {
         perror("Error opening file");
         exit(EXIT_FAILURE);
     }
@@ -64,8 +66,9 @@ size_t read_file(const char* filename, size_t offset, uint32_t** buffer) {
 }
 
 void write_file(const char* filename, uint32_t* buffer, size_t size) {
-    FILE* file = fopen(filename, "wb");
-    if (!file) {
+    FILE* file = NULL;
+    errno_t err = fopen_s(&file, filename, "wb");
+    if (err != 0 || !file) {
         perror("Error opening file for writing");
         exit(EXIT_FAILURE);
     }
@@ -94,7 +97,6 @@ void create_tim_header(uint8_t* header, uint32_t* palette, size_t palette_size) 
     uint16_t image_width = 0x40;
     uint16_t image_height = 256;
 
-
     memcpy(header, &tim_magic, 4);
     memcpy(header + 4, &color_depth, 4);
     memcpy(header + 8, &clut_len, 4);
@@ -111,8 +113,9 @@ void create_tim_header(uint8_t* header, uint32_t* palette, size_t palette_size) 
 }
 
 void append_palette(const char* clt_file, const char* tim_file1, const char* tim_file2) {
-    FILE* clt = fopen(clt_file, "rb");
-    if (!clt) {
+    FILE* clt = NULL;
+    errno_t err_clt = fopen_s(&clt, clt_file, "rb");
+    if (err_clt != 0 || !clt) {
         perror("Error opening CLT file");
         exit(EXIT_FAILURE);
     }
@@ -129,9 +132,11 @@ void append_palette(const char* clt_file, const char* tim_file1, const char* tim
     create_tim_header(header1, palette, 0x100);
     create_tim_header(header2, palette, 0x100);
 
-    FILE* tim1 = fopen(tim_file1, "rb+");
-    FILE* tim2 = fopen(tim_file2, "rb+");
-    if (!tim1 || !tim2) {
+    FILE* tim1 = NULL;
+    FILE* tim2 = NULL;
+    errno_t err_tim1 = fopen_s(&tim1, tim_file1, "rb+");
+    errno_t err_tim2 = fopen_s(&tim2, tim_file2, "rb+");
+    if (err_tim1 != 0 || !tim1 || err_tim2 != 0 || !tim2) {
         perror("Error opening TIM files");
         exit(EXIT_FAILURE);
     }
@@ -153,8 +158,8 @@ void append_palette(const char* clt_file, const char* tim_file1, const char* tim
     fclose(tim1);
     fclose(tim2);
 
-    tim1 = fopen(tim_file1, "wb");
-    tim2 = fopen(tim_file2, "wb");
+    fopen_s(&tim1, tim_file1, "wb");
+    fopen_s(&tim2, tim_file2, "wb");
 
     fwrite(header1, sizeof(uint8_t), 288, tim1);
     fwrite(buffer1, 1, size1, tim1);
@@ -170,8 +175,9 @@ void append_palette(const char* clt_file, const char* tim_file1, const char* tim
 }
 
 uint32_t read_offset_value(const char *filename, size_t offset) {
-    FILE *file = fopen(filename, "rb");
-    if (!file) {
+    FILE *file = NULL;
+    errno_t err = fopen_s(&file, filename, "rb");
+    if (err != 0 || !file) {
         perror("File open error");
         return 0;
     }

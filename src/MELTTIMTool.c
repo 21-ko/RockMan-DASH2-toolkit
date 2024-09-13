@@ -6,7 +6,8 @@
  *  DASH2 compression algorithm.
  *  
  *  Author:  happy_land
- *  Date:  2024-06-17
+ *  Date:  2024-06-18
+ *  Last update:  2024-09-14
  *  
  *******************************************************************************/
 
@@ -160,8 +161,10 @@ typedef struct {
 
 // 파일을 읽어 ByteArray 구조체로 반환하는 함수
 ByteArray read_file(const char *filename, size_t offset, size_t limit) {
-    FILE *file = fopen(filename, "rb");
-    if (!file) {
+	FILE *file = NULL;
+	errno_t err = fopen_s(&file, filename, "rb");
+	
+    if (err != 0 || file == NULL) {
         fprintf(stderr, "Failed to open file\n");
         exit(1);
     }
@@ -273,7 +276,7 @@ void add_payload(BitStream *bs, const uint8_t *data, size_t size) {
 
 // 슬라이딩 윈도우를 사용하여 가장 긴 매치를 찾는 함수
 void find_match(uint8_t *data, size_t pos, size_t len, size_t *match_pos, size_t *match_len) {
-    size_t search_start = pos / WINDOW_SIZE * WINDOW_SIZE;
+    size_t search_pos = pos / WINDOW_SIZE * WINDOW_SIZE;
     if (pos >= len) {
         *match_pos = 0;
         *match_len = 0;
@@ -290,7 +293,7 @@ void find_match(uint8_t *data, size_t pos, size_t len, size_t *match_pos, size_t
     size_t max_match_length = 0;
     size_t max_match_position = 0;
 
-    for (size_t i = search_start; i < pos; i++) {
+    for (size_t i = search_pos; i < pos; ++i) {
         size_t current_match_length = 0;
         while (current_match_length < length && i + current_match_length < pos &&
                data[i + current_match_length] == data[pos + current_match_length]) {
@@ -413,8 +416,10 @@ const char* get_dirname(const char* path) {
 
 // 파일 쓰기 함수
 int write_file(const char *filename, uint8_t *data, size_t size) {
-    FILE *file = fopen(filename, "wb");
-    if (!file) {
+    FILE *file = NULL;
+    errno_t err = fopen_s(&file, filename, "wb");
+    
+    if (err != 0 || file == NULL) {
         perror("Unable to open a file");
         return 1;
     }
@@ -426,8 +431,10 @@ int write_file(const char *filename, uint8_t *data, size_t size) {
 
 // 파일 부분 덮어쓰기 함수
 int overwrite_file(const char *filename, uint8_t *data, size_t size, unsigned int offset) {
-    FILE *file = fopen(filename, "r+b");
-    if (!file) {
+    FILE *file = NULL;
+    errno_t err = fopen_s(&file, filename, "r+b");
+    
+    if (err != 0 || file == NULL) {
         perror("Unable to open the file for overwriting");
         return 1;
     }

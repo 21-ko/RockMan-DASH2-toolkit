@@ -3,8 +3,9 @@
 txt2msg.py
 
 Description: Script to convert TXT to MSG.
-Date: 24-06-17
 Author: happy_land
+Date: 24-06-17
+Last update: 24-09-14
 """
 
 import re
